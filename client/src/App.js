@@ -1,31 +1,30 @@
-import React, { useState, useEffect} from 'react'
+import React, { useState } from 'react';
+import axios from 'axios';
 
-const App = () => {
+function App() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [scrapedData, setScrapedData] = useState([]);
 
-  const [data, setData] = useState([{}])
+    const handleSearch = async () => {
+        try {
+            const response = await axios.post('/scrape', { search_query: searchQuery });
+            setScrapedData(response.data);
+        } catch (error) {
+            console.error('Error scraping data:', error);
+        }
+    };
 
-  useEffect(() => {
-    fetch("/members").then(
-      res => res.json()
-    ).then(
-      data => {
-        setData(data)
-        console.log(data)
-      }
-    )
-  })
-  return (
-    <div>
-
-      {(typeof data.members === 'undefined') ? (
-        <p>Loading...</p>
-      ) : (
-        data.members.map((member, i) =>(
-          <p key={i}>{member}</p>
-        ))
-      )}
-    </div>
-  )
+    return (
+        <div>
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button onClick={handleSearch}>Search</button>
+            {/* Display scraped data */}
+        </div>
+    );
 }
 
-export default App
+export default App;
