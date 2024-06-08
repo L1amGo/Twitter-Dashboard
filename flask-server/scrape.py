@@ -1,8 +1,11 @@
 from selenium.webdriver import Chrome
+# scrape.py
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
-from getpass import getpass
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from time import sleep
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_tweet_data(tweet):
@@ -26,76 +29,81 @@ def get_tweet_data(tweet):
     return tweet
 
 
-def scrape_tweets(search_query):
-    # creating web driver
+def scrape_tweets(email, password, phone_number, search_query):
     driver = Chrome()
     driver.get('https://www.twitter.com/login')
     sleep(8)
 
-    # logging in
-    username = driver.find_element("xpath", "//input[@name='text']")
-    username.send_keys('liam.jordan.guinto@gmail.com')
-    username.send_keys(Keys.RETURN)
-
-    sleep(6)
     try:
-        phone = driver.find_element("xpath", "//input[@name='text']")
-        phone.send_keys('4379970891')
-        phone.send_keys(Keys.RETURN)
-    except NoSuchElementException:
-        pass
+        # logging in
+        username = driver.find_element("xpath", "//input[@name='text']")
+        username.send_keys(email)
+        username.send_keys(Keys.RETURN)
 
-    my_password = getpass()
-    password = driver.find_element("xpath", "//input[@name='password']")
-    password.send_keys(my_password)
-    password.send_keys(Keys.RETURN)
-    sleep(6)
+        sleep(6)
+        try:
+            phone = driver.find_element("xpath", "//input[@name='text']")
+            phone.send_keys(phone_number)
+            phone.send_keys(Keys.RETURN)
+            sleep(6)
+        except NoSuchElementException:
+            pass
 
-    # Making search
-    search_input = driver.find_element(
-        "xpath", "//input[@aria-label='Search query']")
-    search_input.send_keys('#keria')
-    search_input.send_keys(Keys.RETURN)
-    sleep(6)
+        password_field = driver.find_element(
+            "xpath", "//input[@name='password']")
+        password_field.send_keys(password)
+        password_field.send_keys(Keys.RETURN)
+        sleep(6)
 
-    # Looking for latest data
-    driver.find_element("link text", 'Latest').click()
+        # Making search
+        search_input = driver.find_element(
+            "xpath", "//input[@aria-label='Search query']")
+        search_input.send_keys(f'#{search_query}')
+        search_input.send_keys(Keys.RETURN)
+        sleep(6)
 
-    data = []
-    tweet_ids = set()
-    last_position = driver.execute_script("return window.pageYOffset;")
-    scrolling = True
+        # Looking for latest data
+        driver.find_element("link text", 'Latest').click()
 
-    while scrolling and len(data) < 500:
-        tweets = driver.find_elements(
-            "xpath", "//article[@data-testid='tweet']")
-        for tweet in tweets[-15:]:
-            tweet = get_tweet_data(tweet)
-            if tweet:
-                tweet_id = ''.join(tweet)
-                if tweet_id not in tweet_ids:
-                    tweet_ids.add(tweet_id)
-                data.append(tweet)
-        scroll_attempt = 0
-        while True:
-            # check scroll position
-            driver.execute_script(
-                'window.scrollTo(0, document.body.scrollHeight);')
-            sleep(1)
-            curr_position = driver.execute_script("return window.pageYOffset;")
-            if last_position == curr_position:
-                scroll_attempt += 1
+        data = []
+        tweet_ids = set()
+        last_position = driver.execute_script("return window.pageYOffset;")
+        scrolling = True
 
-                # end of scroll region
-                if scroll_attempt >= 3:
-                    scrolling = False
-                    break
+        while scrolling and len(data) < 10:
+            tweets = driver.find_elements(
+                "xpath", "//article[@data-testid='tweet']")
+            for tweet in tweets[-15:]:
+                tweet_data = get_tweet_data(tweet)
+                if tweet_data:
+                    tweet_id = ''.join(tweet_data)
+                    if tweet_id not in tweet_ids:
+                        tweet_ids.add(tweet_id)
+                        data.append(tweet_data)
+            scroll_attempt = 0
+            while True:
+                # check scroll position
+                driver.execute_script(
+                    'window.scrollTo(0, document.body.scrollHeight);')
+                sleep(1)
+                curr_position = driver.execute_script(
+                    "return window.pageYOffset;")
+                if last_position == curr_position:
+                    scroll_attempt += 1
+
+                    # end of scroll region
+                    if scroll_attempt >= 3:
+                        scrolling = False
+                        break
+                    else:
+                        sleep(2)
                 else:
-                    sleep(2)
-
-            else:
-                last_position = curr_position
-                break
-
+                    last_position = curr_position
+                    break
         driver.quit()
-        return (data)
+        return data
+
+    except WebDriverException as e:
+        logging.error(f"WebDriver error: {e}", exc_info=True)
+    finally:
+        driver.quit()
