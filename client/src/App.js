@@ -1,31 +1,25 @@
 // src/App.js
-
 import React, { useState } from 'react';
-import axios from 'axios';
-import SearchForm from './components/SearchForm.js';
-import ScrapedDataList from './components/ScrapedDataList';
+import InputForm from './components/InputForm';
+import Dashboard from './components/Dashboard';
 
 function App() {
     const [scrapedData, setScrapedData] = useState([]);
-
-    const handleSearch = async (email, password, phoneNumber, searchQuery) => {
-        try {
-            const response = await axios.post('/scrape', {
-                email,
-                password,
-                phone_number: phoneNumber,
-                search_query: searchQuery
-            });
-            setScrapedData(response.data);
-        } catch (error) {
-            console.error('Error scraping data:', error);
-        }
-    };
+    const [loading, setLoading] = useState(false);
+    const [showDashboard, setShowDashboard] = useState(false);
 
     return (
         <div>
-            <SearchForm onSearch={handleSearch} />
-            <ScrapedDataList data={scrapedData} />
+            {!showDashboard ? (
+                <InputForm 
+                    setScrapedData={setScrapedData}
+                    setLoading={setLoading}
+                    setShowDashboard={setShowDashboard}
+                    loading={loading} // Pass loading state to InputForm
+                />
+            ) : (
+                <Dashboard data={scrapedData} />
+            )}
         </div>
     );
 }
