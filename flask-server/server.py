@@ -5,17 +5,17 @@ from scrape import scrape_tweets
 app = Flask(__name__)
 
 
-# def calculate_sentiment_counts(tweets):
-#     sentiment_counts = {'positive': 0, 'neutral': 0, 'negative': 0}
-#     for tweet in tweets:
-#         sentiment = max(tweet[7:10])
-#         if sentiment == tweet[7]:
-#             sentiment_counts['negative'] += 1
-#         elif sentiment == tweet[8]:
-#             sentiment_counts['neutral'] += 1
-#         elif sentiment == tweet[9]:
-#             sentiment_counts['positive'] += 1
-#     return sentiment_counts
+def calculate_sentiment_counts(tweets):
+    sentiment_counts = {'positive': 0, 'neutral': 0, 'negative': 0}
+    for tweet in tweets:
+        sentiment = max(tweet[7:10])
+        if sentiment == tweet[7]:
+            sentiment_counts['negative'] += 1
+        elif sentiment == tweet[8]:
+            sentiment_counts['neutral'] += 1
+        elif sentiment == tweet[9]:
+            sentiment_counts['positive'] += 1
+    return sentiment_counts
 
 
 @app.route('/scrape', methods=['POST'])
@@ -32,11 +32,11 @@ def scrape():
     try:
         scraped_data = scrape_tweets(
             email, password, phone_number, search_query)
-        # sentiment_counts = calculate_sentiment_counts(scraped_data)
+        sentiment_counts = calculate_sentiment_counts(scraped_data)
 
         response_data = {
-            'tweets': scraped_data
-            # ,'sentiment_counts': sentiment_counts
+            'tweets': scraped_data,
+            'sentiment_counts': sentiment_counts
         }
 
         return jsonify(response_data)
