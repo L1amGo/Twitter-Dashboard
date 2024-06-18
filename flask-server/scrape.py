@@ -1,11 +1,25 @@
 from selenium.webdriver import Chrome
-# scrape.py
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from time import sleep
 import logging
+# from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# from scipy.special import softmax
 
 logging.basicConfig(level=logging.INFO)
+
+# MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+# tokenizer = AutoTokenizer.from_pretrained(MODEL)
+# model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+
+
+# def polarity_scores_roberta(text, num):
+#     encoded_text = tokenizer(text, return_tensors='pt')
+#     output = model(**encoded_text)
+#     scores = output[0][0].detach().numpy()
+#     scores = softmax(scores)
+#     roberta = scores[num]
+#     return roberta
 
 
 def get_tweet_data(tweet):
@@ -24,8 +38,13 @@ def get_tweet_data(tweet):
     repost = tweet.find_element(
         "xpath", ".//button[@data-testid='retweet']").text
     like = tweet.find_element("xpath", ".//button[@data-testid='like']").text
+    # roberta_neg = str(round(float(polarity_scores_roberta(text, 0)), 2))
+    # roberta_neu = str(round(float(polarity_scores_roberta(text, 1)), 2))
+    # roberta_pos = str(round(float(polarity_scores_roberta(text, 2)), 2))
 
-    tweet = (username, handle, timestamp, text, reply, repost, like)
+    # include (roberta_neg, roberta_neu, roberta_pos) when using sentiment analysis
+    tweet = (username, handle, timestamp, text, reply,
+             repost, like)
     return tweet
 
 
@@ -54,6 +73,14 @@ def scrape_tweets(email, password, phone_number, search_query):
         password_field.send_keys(password)
         password_field.send_keys(Keys.RETURN)
         sleep(6)
+
+        try:
+            phone = driver.find_element("xpath", "//input[@name='text']")
+            phone.send_keys(phone_number)
+            phone.send_keys(Keys.RETURN)
+            sleep(6)
+        except NoSuchElementException:
+            pass
 
         # Making search
         search_input = driver.find_element(
