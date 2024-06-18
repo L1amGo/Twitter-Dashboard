@@ -2,7 +2,7 @@
 
 ## Application used to scrape tweets off of twitter.
 
-## In terminal
+### In terminal
 ```
 cd flask-server
 source venv/bin/activate
